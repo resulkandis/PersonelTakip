@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PT.Entity.IdentityModel
 {
-    class ApplicationRole:IdentityRole
+    public class ApplicationRole:IdentityRole
     {
         [StringLength(200)]
         public string Description { get; set; }

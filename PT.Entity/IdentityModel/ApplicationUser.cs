@@ -19,7 +19,7 @@ namespace PT.Entity.IdentityModel
         [Column(TypeName = "smalldatetime")]
         public DateTime RegisterDate { get; set; } = DateTime.Now;
         public decimal Salary { get; set; }
-        public int DepartmentId { get; set; }
+        public int? DepartmentId { get; set; }
 
 
         [ForeignKey("DepartmentId")]

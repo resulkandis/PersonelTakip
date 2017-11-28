@@ -53,6 +53,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Migrations\201711281202232_ilk.cs" />
+    <Compile Include="Migrations\201711281202232_ilk.Designer.cs">
+      <DependentUpon>201711281202232_ilk.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201711281235172_iki.cs" />
+    <Compile Include="Migrations\201711281235172_iki.Designer.cs">
+      <DependentUpon>201711281235172_iki.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="MyContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -65,6 +74,14 @@
       <Project>{183101e1-fb4d-4217-bb88-1fafcb4a4766}</Project>
       <Name>PT.Entity</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201711281202232_ilk.resx">
+      <DependentUpon>201711281202232_ilk.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201711281235172_iki.resx">
+      <DependentUpon>201711281235172_iki.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -33,7 +33,8 @@
             <div class="row">
                 <div class="col-sm-6">
                     @Html.ActionLink("Üye Değilseniz", "Register", "Account", new { @class = "btn btn-info btn-block" })<br />
-                    <input type="submit" value="Giriş Yap" class="btn btn-block btn btn-success" />
+                    <input type="submit" value="Giriş Yap" class="btn btn-block btn btn-success" /> <br />
+                    @Html.ActionLink("Şifremi Unuttum", "RecoverPassword", "Account", new { @class = "btn btn-warning btn-block" })<br />
                 </div>
             </div>
 

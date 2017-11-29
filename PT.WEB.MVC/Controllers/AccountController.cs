@@ -37,6 +37,13 @@ namespace PT.WEB.MVC.Controllers
                 return View(model);
             }
 
+            checkUser = userManager.FindByEmail(model.Email); // email teklik metodu
+            if (checkUser != null)
+            {
+                ModelState.AddModelError(string.Empty, "Bu eposta adresi kullanılmakta");
+                return View(model);
+            }
+
             //register islemi yapılır
             var activationCode = Guid.NewGuid().ToString();
 
@@ -139,7 +146,7 @@ namespace PT.WEB.MVC.Controllers
             userManager.RemoveFromRole(sonuc.Id, "Passive");
             userManager.AddToRole(sonuc.Id, "User");
 
-            ViewBag.sonuc = $"Merhaba {sonuc.Name} {sonuc.Surname} <br/> Aktivasyon İşleminiz Başarılırı";
+            ViewBag.sonuc = $"Merhaba {sonuc.Name} {sonuc.Surname} <br/> Aktivasyon İşleminiz Başarılı";
 
             await SiteSettings.SendMail(new MailModel()
             {
@@ -152,5 +159,42 @@ namespace PT.WEB.MVC.Controllers
 
             return View();
         }
+
+        public ActionResult RecoverPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> RecoverPassword(string email)
+        {
+            var userStore = MemberShipTools.NewUserStore();
+            var userManager = new UserManager<ApplicationUser>(userStore);
+            var sonuc = userStore.Context.Set<ApplicationUser>().FirstOrDefault(x => x.Email == email);
+
+            if (sonuc == null)
+            {
+                ViewBag.sonuc = "E Mail adresiniz sisteme kayıtlı değildir";
+                return View();
+            }
+
+            var randomPass = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 6);
+            await userStore.SetPasswordHashAsync(sonuc, userManager.PasswordHasher.HashPassword(randomPass));
+            await userStore.UpdateAsync(sonuc);
+            await userStore.Context.SaveChangesAsync();
+
+            await SiteSettings.SendMail(new MailModel()
+            {
+                To=sonuc.Email,
+                Subject="Şifreniz değişti.",
+                Message=$"Merhaba {sonuc.Name} {sonuc.Surname} <br/> Yeni Şifreniz: <b>{randomPass}</b>"
+                
+            });
+            ViewBag.sonuc = "Email adresinize yeni şifreniz gönderilmiştir";
+
+            return View();
+        }
+
     }
 }

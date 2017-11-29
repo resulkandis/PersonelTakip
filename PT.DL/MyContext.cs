@@ -15,7 +15,13 @@ namespace PT.DL
         public MyContext()
             :base("name=MyCon")
         {
+            
+        }
 
+        protected override void OnModelCreating(DbModelBuilder modelBuilder) //bu e mail teklil metodu ama çalışmıyo nedense 
+        {
+            base.OnModelCreating(modelBuilder);
+            this.RequireUniqueEmail = true;
         }
 
         public virtual DbSet<Department> Departments { get; set; }

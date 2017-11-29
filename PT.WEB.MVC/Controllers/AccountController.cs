@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNet.Identity;
+using Microsoft.Owin.Security;
 using PT.BL.AccountRepository;
 using PT.BL.Settings;
 using PT.Entity.IdentityModel;
@@ -70,7 +71,7 @@ namespace PT.WEB.MVC.Controllers
                     {
                         To = user.Email,
                         Subject = "Personel Yönetimi - Aktivasyon",
-                        Message = $"Merhaba {user.Name}{user.Surname} <br/> Sistemi Kullanabilmeniz için <a href='{siteUrl}/Account/Activation?code={activationCode}'> Akticasyon Kodu </a>"  //dolar işareti konunca süslü parantez gibi yazabiliriz.
+                        Message = $"Merhaba {user.Name}{user.Surname} <br/> Sistemi Kullanabilmeniz için <a href='{siteUrl}/Account/Activation?code={activationCode}'> Aktivasyon Kodu </a>"  //dolar işareti konunca süslü parantez gibi yazabiliriz.
                     });
                 }
 
@@ -83,6 +84,73 @@ namespace PT.WEB.MVC.Controllers
                 return View(model);
             }
             
+        }
+
+        public ActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Login(LoginViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userManager = MemberShipTools.NewUserManager();
+            var user = await userManager.FindAsync(model.UserName, model.Password);
+            if (user==null)
+            {
+                ModelState.AddModelError(string.Empty, "Böyle bir kullanıcı bulunamadı");
+                return View(model);
+            }
+            var authManager = HttpContext.GetOwinContext().Authentication;
+            var userIdentity = await userManager.CreateIdentityAsync(user, DefaultAuthenticationTypes.ApplicationCookie);
+            authManager.SignIn(new AuthenticationProperties
+            {
+                IsPersistent = model.RememberMe
+            }, userIdentity);
+            return RedirectToAction("Index", "Home");
+        }
+
+        [Authorize]
+        public ActionResult LogOut()
+        {
+            var authManager = HttpContext.GetOwinContext().Authentication;
+            authManager.SignOut();
+            return RedirectToAction("Login", "Account");
+        }
+
+        public async Task<ActionResult> Activation(string code)
+        {
+            var userStore = MemberShipTools.NewUserStore();
+            var userManager = new UserManager<ApplicationUser>(userStore);
+            var sonuc = userStore.Context.Set<ApplicationUser>().FirstOrDefault(x => x.ActivationCode == code);
+            if (sonuc==null)
+            {
+                ViewBag.sonuc = "Aktivaston İşlemi Başarısız";
+                return View();
+            }
+            sonuc.EmailConfirmed = true;
+            await userStore.UpdateAsync(sonuc);
+            await userStore.Context.SaveChangesAsync();
+
+            userManager.RemoveFromRole(sonuc.Id, "Passive");
+            userManager.AddToRole(sonuc.Id, "User");
+
+            ViewBag.sonuc = $"Merhaba {sonuc.Name} {sonuc.Surname} <br/> Aktivasyon İşleminiz Başarılırı";
+
+            await SiteSettings.SendMail(new MailModel()
+            {
+                To = sonuc.Email,
+                Message = ViewBag.sonuc.ToString(),
+                Subject = "Aktivasyon",
+                Bcc = "poyildirim@gmail.com"
+
+            });
+
+            return View();
         }
     }
 }

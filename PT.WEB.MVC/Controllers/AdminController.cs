@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNet.Identity;
 using PT.BL.AccountRepository;
+using PT.Entity.IdentityModel;
 using PT.Entity.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -45,11 +47,12 @@ namespace PT.WEB.MVC.Controllers
             var roles = MemberShipTools.NewManager().Roles.ToList();
 
             List<SelectListItem> rolist = new List<SelectListItem>();
-            roles.ForEach(x => new SelectListItem()
+            roles.ForEach(x => rolist.Add(new SelectListItem()
             {
                 Text = x.Name,
                 Value = x.Id
-            });
+            })
+            );
             ViewBag.roles = rolist;
 
             var userManager = MemberShipTools.NewUserManager();
@@ -77,6 +80,43 @@ namespace PT.WEB.MVC.Controllers
             return View(model);
 
             
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> EditUser(UsersViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var roles = MemberShipTools.NewManager().Roles.ToList();
+            var userStore = MemberShipTools.NewUserStore();
+            var userManager = new UserManager<ApplicationUser>(userStore);
+
+            var user = userManager.FindById(model.UserId);
+            if (user == null)
+                return View("Index");
+
+            user.UserName = model.UserName;
+            user.Name = model.Name;
+            user.Surname = model.Surname;
+            user.Salary = model.Salary;
+            user.Email = model.Email;
+            
+            if(model.RoleId != user.Roles.ToList().FirstOrDefault().RoleId)
+            {
+                var yeniRoleAdi = roles.First(x => x.Id == model.RoleId).Name;
+                userManager.AddToRole(model.UserId, yeniRoleAdi);
+                var eskiRoleAdi = roles.First(x => x.Id == user.Roles.ToList().First().RoleId).Name;
+                userManager.RemoveFromRoles(model.UserId, eskiRoleAdi);
+            }
+
+            await userStore.UpdateAsync(user);
+            await userStore.Context.SaveChangesAsync();
+
+
+            return RedirectToAction("EditUser", new { id = model.UserId }); 
+
         }
     }
 }
